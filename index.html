@@ -3,343 +3,1002 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Audio/Video to Text Converter</title>
+    <title>Deep Learning for Computer Vision</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Georgia:wght@400;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
         body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
+            font-family: Georgia, serif;
+            background: #FEF7ED;
+            color: #1E293B;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+        
+        #particles-canvas {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: -1;
+        }
+        
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #EA580C, #059669);
+            z-index: 1000;
+            transition: width 0.3s ease;
+        }
+        
+        .nav-bar {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(254, 247, 237, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            z-index: 999;
+            border: 1px solid rgba(234, 88, 12, 0.2);
+        }
+        
+        .nav-bar a {
+            display: block;
+            color: #EA580C;
+            text-decoration: none;
+            margin: 8px 0;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            padding: 5px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        
+        .nav-bar a:hover {
+            background: #EA580C;
+            color: white;
+            transform: translateX(5px);
+        }
+        
+        .slide {
+            min-height: 100vh;
+            padding: 60px 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            max-width: 1200px;
             margin: 0 auto;
-            padding: 20px;
-            background: #f5f5f5;
+            opacity: 0;
+            transform: translateY(50px);
+            transition: all 0.8s ease;
         }
-        .container {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        
+        .slide.visible {
+            opacity: 1;
+            transform: translateY(0);
         }
-        h1 {
-            color: #333;
-            text-align: center;
+        
+        .slide h1 {
+            font-size: 3.5rem;
+            color: #EA580C;
             margin-bottom: 30px;
-        }
-        .upload-area {
-            border: 2px dashed #ccc;
-            border-radius: 10px;
-            padding: 40px;
             text-align: center;
+            background: linear-gradient(135deg, #EA580C, #059669);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .slide h2 {
+            font-size: 2.5rem;
+            color: #EA580C;
+            margin-bottom: 25px;
+            border-bottom: 3px solid #EA580C;
+            padding-bottom: 15px;
+        }
+        
+        .slide h3 {
+            font-size: 1.8rem;
+            color: #059669;
             margin-bottom: 20px;
-            transition: border-color 0.3s;
         }
-        .upload-area:hover {
-            border-color: #007bff;
+        
+        .slide p {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            line-height: 1.8;
         }
-        .upload-area.dragover {
-            border-color: #007bff;
-            background: #f0f8ff;
+        
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            align-items: start;
         }
-        input[type="file"] {
-            display: none;
+        
+        .visual-slide {
+            text-align: center;
+            padding: 40px;
         }
-        .upload-btn {
-            background: #007bff;
-            color: white;
-            padding: 12px 24px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        .upload-btn:hover {
-            background: #0056b3;
-        }
-        .media-player {
+        
+        .diagram-container {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 30px;
             margin: 20px 0;
-            text-align: center;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
         }
-        audio, video {
-            max-width: 100%;
-            border-radius: 5px;
+        
+        .architecture-diagram {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 30px 0;
+            flex-wrap: wrap;
+            gap: 20px;
         }
-        .controls {
-            margin: 20px 0;
-            text-align: center;
-        }
-        .transcribe-btn {
-            background: #28a745;
+        
+        .layer-box {
+            background: linear-gradient(135deg, #EA580C, #dc2626);
             color: white;
-            padding: 15px 30px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 18px;
-            margin: 0 10px;
-        }
-        .transcribe-btn:hover {
-            background: #1e7e34;
-        }
-        .transcribe-btn:disabled {
-            background: #6c757d;
-            cursor: not-allowed;
-        }
-        .stop-btn {
-            background: #dc3545;
-        }
-        .stop-btn:hover {
-            background: #c82333;
-        }
-        .status {
+            padding: 15px 20px;
+            border-radius: 10px;
             text-align: center;
-            margin: 15px 0;
-            padding: 10px;
-            border-radius: 5px;
+            min-width: 120px;
+            font-weight: bold;
+            transition: transform 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .layer-box:hover {
+            transform: scale(1.05);
+        }
+        
+        .arrow {
+            font-size: 2rem;
+            color: #EA580C;
             font-weight: bold;
         }
-        .status.listening {
-            background: #d4edda;
-            color: #155724;
+        
+        .timeline {
+            position: relative;
+            padding-left: 30px;
         }
-        .status.error {
-            background: #f8d7da;
-            color: #721c24;
+        
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(180deg, #EA580C, #059669);
         }
-        .transcript {
-            margin-top: 20px;
+        
+        .timeline-item {
+            position: relative;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 15px;
+            border-left: 4px solid #EA580C;
         }
-        .transcript-output {
-            width: 100%;
-            min-height: 200px;
-            padding: 15px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-family: inherit;
-            font-size: 16px;
-            line-height: 1.5;
-            resize: vertical;
+        
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -32px;
+            top: 25px;
+            width: 12px;
+            height: 12px;
+            background: #EA580C;
+            border-radius: 50%;
         }
-        .instructions {
-            background: #fff3cd;
-            border: 1px solid #ffeaa7;
-            border-radius: 5px;
-            padding: 15px;
-            margin-bottom: 20px;
-            color: #856404;
+        
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(234, 88, 12, 0.1), rgba(5, 150, 105, 0.1));
+            border: 2px solid #EA580C;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 25px 0;
         }
-        .copy-btn {
-            background: #6c757d;
-            color: white;
-            padding: 8px 16px;
-            border: none;
-            border-radius: 3px;
+        
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin: 25px 0;
+        }
+        
+        .comparison-item {
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 15px;
+            padding: 25px;
+            border: 2px solid #059669;
+            transition: transform 0.3s ease;
             cursor: pointer;
-            margin-top: 10px;
         }
-        .copy-btn:hover {
-            background: #545b62;
+        
+        .comparison-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .back-to-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #EA580C;
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            font-size: 20px;
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 998;
+        }
+        
+        .back-to-top.visible {
+            opacity: 1;
+        }
+        
+        .back-to-top:hover {
+            background: #059669;
+            transform: scale(1.1);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 15px;
+            border: 2px solid #EA580C;
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #EA580C;
+            display: block;
+        }
+        
+        .ethical-warning {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(234, 88, 12, 0.1));
+            border: 2px solid #EF4444;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 25px 0;
+        }
+        
+        .visual-comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin: 30px 0;
+        }
+        
+        .before-after {
+            text-align: center;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 15px;
+            border: 2px solid #059669;
+        }
+        
+        .process-flow {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 30px 0;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .process-step {
+            background: linear-gradient(135deg, #059669, #047857);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            flex: 1;
+            min-width: 150px;
+            font-weight: bold;
+            transition: transform 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .process-step:hover {
+            transform: scale(1.05);
+        }
+        
+        .chart-container {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 25px 0;
+            text-align: center;
+        }
+        
+        .hybrid-diagram {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 30px 0;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .traditional-box {
+            background: linear-gradient(135deg, #059669, #047857);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            min-width: 150px;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        
+        .traditional-box:hover {
+            transform: scale(1.05);
+        }
+        
+        .plus-symbol {
+            font-size: 3rem;
+            color: #EA580C;
+            font-weight: bold;
+        }
+        
+        .deep-learning-box {
+            background: linear-gradient(135deg, #EA580C, #dc2626);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            min-width: 150px;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        
+        .deep-learning-box:hover {
+            transform: scale(1.05);
+        }
+        
+        .equals-symbol {
+            font-size: 3rem;
+            color: #059669;
+            font-weight: bold;
+        }
+        
+        .result-box {
+            background: linear-gradient(135deg, #7c3aed, #5b21b6);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            min-width: 150px;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        
+        .result-box:hover {
+            transform: scale(1.05);
+        }
+        
+        @media (max-width: 768px) {
+            .slide {
+                padding: 40px 20px;
+            }
+            
+            .slide h1 {
+                font-size: 2.5rem;
+            }
+            
+            .slide h2 {
+                font-size: 2rem;
+            }
+            
+            .two-column, .visual-comparison {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .nav-bar {
+                position: relative;
+                top: 0;
+                right: 0;
+                margin: 20px;
+                text-align: center;
+            }
+            
+            .architecture-diagram, .process-flow, .hybrid-diagram {
+                flex-direction: column;
+            }
+            
+            .arrow, .plus-symbol, .equals-symbol {
+                transform: rotate(90deg);
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Audio/Video to Text Converter</h1>
+    <div id="app">
+        <canvas id="particles-canvas" ref="particleCanvas"></canvas>
+        <div class="progress-bar" :style="{ width: scrollProgress + '%' }"></div>
         
-        <div class="instructions">
-            <strong>How it works:</strong> Upload your audio/video file, play it through your speakers, then click "Start Transcribing" to capture the audio through your microphone. Make sure your microphone can pick up the audio from your speakers for best results.
-        </div>
+        <nav class="nav-bar">
+            <a @click="scrollToSection('intro')">Introduction</a>
+            <a @click="scrollToSection('inverse-problem')">The Challenge</a>
+            <a @click="scrollToSection('history')">Historical Journey</a>
+            <a @click="scrollToSection('architectures')">Architectures</a>
+            <a @click="scrollToSection('applications')">Applications</a>
+            <a @click="scrollToSection('ethics')">Ethics</a>
+            <a @click="scrollToSection('hybrid')">Hybrid Future</a>
+            <a @click="scrollToSection('synthesis')">Synthesis</a>
+        </nav>
+        
+        <section id="intro" class="slide" :class="{ visible: visibleSlides.intro }">
+            <h1>Deep Learning for Computer Vision</h1>
+            <div class="highlight-box">
+                <p>You know what's fascinating about your research? You've uncovered something that many textbooks miss entirely. This isn't just a story about deep learning swooping in and replacing everything that came before. Computer vision is this incredibly rich field where we're constantly learning how to balance cutting-edge AI with time-tested traditional methods, all while wrestling with some profound ethical questions.</p>
+                
+                <p>Think about it this way - we're essentially trying to teach machines to see and understand the world the way humans do. But here's the kicker: we don't even fully understand how human vision works! It's like trying to reverse-engineer a masterpiece when you only have fragments of the blueprint.</p>
+            </div>
+        </section>
 
-        <div class="upload-area" id="uploadArea">
-            <p>Drag & drop your audio/video file here or</p>
-            <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
-                Choose File
-            </button>
-            <input type="file" id="fileInput" accept="audio/*,video/*">
-        </div>
+        <section id="inverse-problem" class="slide visual-slide" :class="{ visible: visibleSlides['inverse-problem'] }">
+            <h2>The Fundamental Challenge: The Inverse Problem</h2>
+            
+            <div class="diagram-container">
+                <h3>From 3D World to 2D Image and Back</h3>
+                <div class="visual-comparison">
+                    <div class="before-after">
+                        <h4>3D Reality</h4>
+                        <svg width="200" height="150" viewBox="0 0 200 150">
+                            <polygon points="50,100 100,100 130,70 80,70" fill="#EA580C" stroke="#1E293B" stroke-width="2"/>
+                            <polygon points="100,100 130,70 130,20 100,50" fill="#dc2626" stroke="#1E293B" stroke-width="2"/>
+                            <polygon points="50,100 80,70 80,20 50,50" fill="#059669" stroke="#1E293B" stroke-width="2"/>
+                            <polygon points="50,50 100,50 130,20 80,20" fill="#f97316" stroke="#1E293B" stroke-width="2"/>
+                        </svg>
+                        <p>Rich spatial information, depth, context</p>
+                    </div>
+                    <div class="before-after">
+                        <h4>2D Image</h4>
+                        <svg width="200" height="150" viewBox="0 0 200 150">
+                            <rect x="50" y="50" width="100" height="60" fill="#EA580C" stroke="#1E293B" stroke-width="2"/>
+                            <circle cx="75" cy="70" r="8" fill="#059669"/>
+                            <circle cx="125" cy="90" r="6" fill="#dc2626"/>
+                        </svg>
+                        <p>Flattened, information lost</p>
+                    </div>
+                </div>
+                <div style="text-align: center; margin: 20px 0;">
+                    <span class="arrow">⬇</span>
+                    <p><strong>Computer Vision's Challenge:</strong> Reconstruct the 3D understanding from the 2D projection</p>
+                </div>
+            </div>
+            
+            <p>Let me give you an example that'll make this crystal clear. When you look at a photograph, you're seeing a 2D projection of a 3D world. Now imagine trying to reconstruct that entire 3D scene from just that flat image. It's like trying to figure out the shape of a building from its shadow - there are infinite possibilities!</p>
+            
+            <div class="highlight-box">
+                <h3>High-Dimensional Complexity</h3>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <span class="stat-number">2.3M</span>
+                        <p>Data points in a 1024x768 color image</p>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">∞</span>
+                        <p>Possible 3D scenes that could create the same 2D image</p>
+                    </div>
+                </div>
+                <p>Traditional machine learning crumbles under this curse of dimensionality, but that's exactly where deep learning started to shine.</p>
+            </div>
+        </section>
 
-        <div class="media-player" id="mediaPlayer" style="display: none;">
-            <div id="mediaContainer"></div>
-        </div>
+        <section id="history" class="slide" :class="{ visible: visibleSlides.history }">
+            <h2>The Historical Journey</h2>
+            <div class="timeline">
+                <div class="timeline-item" v-for="(item, index) in timelineItems" :key="index">
+                    <h3>{{ item.period }}</h3>
+                    <p>{{ item.description }}</p>
+                    <div v-if="item.diagram" class="diagram-container">
+                        <h4>{{ item.diagram.title }}</h4>
+                        <div class="process-flow">
+                            <div v-for="(step, stepIndex) in item.diagram.steps" :key="stepIndex" class="process-step">
+                                {{ step }}
+                            </div>
+                        </div>
+                    </div>
+                    <div v-if="item.stats" class="chart-container">
+                        <h4>{{ item.stats.title }}</h4>
+                        <div class="stats-grid">
+                            <div v-for="(stat, statIndex) in item.stats.data" :key="statIndex" class="stat-item">
+                                <span class="stat-number">{{ stat.value }}</span>
+                                <p>{{ stat.label }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-        <div class="controls">
-            <button class="transcribe-btn" id="startBtn" onclick="startTranscription()" disabled>
-                🎤 Start Transcribing
-            </button>
-            <button class="transcribe-btn stop-btn" id="stopBtn" onclick="stopTranscription()" disabled>
-                ⏹️ Stop Transcribing
-            </button>
-        </div>
+        <section id="architectures" class="slide visual-slide" :class="{ visible: visibleSlides.architectures }">
+            <h2>Modern Deep Learning Architectures</h2>
+            
+            <div class="diagram-container">
+                <h3>Convolutional Neural Network Architecture</h3>
+                <div class="architecture-diagram">
+                    <div v-for="(layer, index) in cnnLayers" :key="index" class="layer-box" @click="highlightLayer(layer)">
+                        {{ layer }}
+                    </div>
+                </div>
+                <p>CNNs use the same principle as biological vision - hierarchical feature detection. Early layers detect edges and textures, deeper layers combine these into complex objects.</p>
+            </div>
+            
+            <div class="comparison-grid">
+                <div class="comparison-item" v-for="(arch, index) in architectures" :key="index" @click="selectArchitecture(arch)">
+                    <h3>{{ arch.name }}</h3>
+                    <p>{{ arch.description }}</p>
+                </div>
+            </div>
+        </section>
 
-        <div class="status" id="status" style="display: none;"></div>
+        <section id="applications" class="slide" :class="{ visible: visibleSlides.applications }">
+            <h2>Real-World Applications</h2>
+            
+            <div class="two-column">
+                <div>
+                    <h3>Autonomous Vehicles</h3>
+                    <div class="diagram-container">
+                        <h4>Vision System Components</h4>
+                        <div class="process-flow">
+                            <div class="process-step">Cameras</div>
+                            <span class="arrow">→</span>
+                            <div class="process-step">Object Detection</div>
+                            <span class="arrow">→</span>
+                            <div class="process-step">Decision Making</div>
+                        </div>
+                    </div>
+                    <p>Self-driving cars are essentially mobile computer vision systems. They need to identify pedestrians, other vehicles, traffic signs, and road conditions in real-time. The stakes couldn't be higher - lives depend on getting this right.</p>
+                </div>
+                <div>
+                    <h3>Medical Imaging</h3>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <span class="stat-number">94%</span>
+                            <p>Accuracy in detecting certain conditions</p>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number">50%</span>
+                            <p>Faster diagnosis than traditional methods</p>
+                        </div>
+                    </div>
+                    <p>In radiology, AI systems are now matching or exceeding human specialists in detecting certain conditions. But they're not replacing doctors; they're augmenting human expertise.</p>
+                </div>
+            </div>
+            
+            <div class="highlight-box">
+                <h3>The Human-AI Collaboration Model</h3>
+                <div class="hybrid-diagram">
+                    <div class="traditional-box">
+                        <h4>Human Expertise</h4>
+                        <p>Context, Ethics, Final Decisions</p>
+                    </div>
+                    <span class="plus-symbol">+</span>
+                    <div class="deep-learning-box">
+                        <h4>AI Analysis</h4>
+                        <p>Pattern Recognition, Speed, Consistency</p>
+                    </div>
+                    <span class="equals-symbol">=</span>
+                    <div class="result-box">
+                        <h4>Superior Outcomes</h4>
+                        <p>Better than either alone</p>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-        <div class="transcript">
-            <label for="transcriptOutput"><strong>Transcript:</strong></label>
-            <textarea id="transcriptOutput" class="transcript-output" placeholder="Transcribed text will appear here..."></textarea>
-            <button class="copy-btn" onclick="copyTranscript()">Copy Text</button>
-        </div>
+        <section id="ethics" class="slide" :class="{ visible: visibleSlides.ethics }">
+            <h2>The Ethical Landscape</h2>
+            
+            <div class="ethical-warning">
+                <h3>Critical Concerns Your Research Identified</h3>
+                <p>Computer vision systems can perpetuate and amplify human biases, often in subtle ways that are difficult to detect. When these systems are used in law enforcement or hiring, biased performance can have life-changing consequences.</p>
+            </div>
+            
+            <div class="visual-comparison">
+                <div class="before-after">
+                    <h4>Biased Dataset</h4>
+                    <svg width="200" height="120" viewBox="0 0 200 120">
+                        <circle v-for="n in 5" :key="'orange-' + n" :cx="30 + n * 30" cy="40" r="15" fill="#EA580C"/>
+                        <circle cx="65" cy="80" r="15" fill="#059669"/>
+                        <text x="100" y="110" text-anchor="middle" font-size="12">Unrepresentative Training Data</text>
+                    </svg>
+                </div>
+                <div class="before-after">
+                    <h4>Biased System</h4>
+                    <svg width="200" height="120" viewBox="0 0 200 120">
+                        <rect x="50" y="30" width="100" height="40" fill="#EF4444" rx="10"/>
+                        <text x="100" y="55" text-anchor="middle" font-size="14" fill="white">AI System</text>
+                        <text x="100" y="90" text-anchor="middle" font-size="12">Discriminatory Outcomes</text>
+                    </svg>
+                </div>
+            </div>
+            
+            <div class="two-column">
+                <div>
+                    <h3>The Problem Chain</h3>
+                    <div class="process-flow">
+                        <div class="process-step" style="background: #EF4444;">Biased Data</div>
+                        <span class="arrow">→</span>
+                        <div class="process-step" style="background: #dc2626;">Biased Model</div>
+                        <span class="arrow">→</span>
+                        <div class="process-step" style="background: #b91c1c;">Harmful Decisions</div>
+                    </div>
+                </div>
+                <div>
+                    <h3>The Solution Path</h3>
+                    <div class="process-flow">
+                        <div class="process-step">Diverse Data</div>
+                        <span class="arrow">→</span>
+                        <div class="process-step">Fair Models</div>
+                        <span class="arrow">→</span>
+                        <div class="process-step">Equitable Outcomes</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="hybrid" class="slide visual-slide" :class="{ visible: visibleSlides.hybrid }">
+            <h2>The Hybrid Future</h2>
+            
+            <div class="highlight-box">
+                <p>Here's what I find most exciting about your analysis - you've identified that the future isn't about deep learning winning and traditional methods losing. It's about intelligent combination of approaches.</p>
+            </div>
+            
+            <div class="diagram-container">
+                <h3>Why Traditional Methods Persist</h3>
+                <div class="comparison-grid">
+                    <div class="comparison-item">
+                        <h4>SIFT/SURF Advantages</h4>
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <span class="stat-number">&lt;1ms</span>
+                                <p>Processing Time</p>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-number">0</span>
+                                <p>Training Data Needed</p>
+                            </div>
+                        </div>
+                        <p>Fast, robust, and don't require massive datasets. Perfect for real-time AR applications.</p>
+                    </div>
+                    <div class="comparison-item">
+                        <h4>Deep Learning Strengths</h4>
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <span class="stat-number">95%+</span>
+                                <p>Accuracy on Complex Tasks</p>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-number">1000+</span>
+                                <p>Categories Recognized</p>
+                            </div>
+                        </div>
+                        <p>Unmatched performance on high-level understanding and complex recognition tasks.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="diagram-container">
+                <h3>The Power of Hybrid Systems</h3>
+                <div class="hybrid-diagram">
+                    <div class="traditional-box">
+                        <h4>Traditional CV</h4>
+                        <p>• Fast preprocessing<br>• Robust features<br>• Interpretable</p>
+                    </div>
+                    <span class="plus-symbol">+</span>
+                    <div class="deep-learning-box">
+                        <h4>Deep Learning</h4>
+                        <p>• High-level reasoning<br>• Pattern recognition<br>• Accuracy</p>
+                    </div>
+                    <span class="equals-symbol">=</span>
+                    <div class="result-box">
+                        <h4>Best of Both</h4>
+                        <p>• Speed + Accuracy<br>• Robustness + Power<br>• Interpretable + Effective</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="synthesis" class="slide" :class="{ visible: visibleSlides.synthesis }">
+            <h2>Synthesis: Looking Forward</h2>
+            
+            <div class="comparison-grid">
+                <div class="comparison-item" v-for="(item, index) in synthesisItems" :key="index" @click="expandSynthesisItem(item)">
+                    <h3>{{ item.title }}</h3>
+                    <div style="text-align: center; margin: 15px 0;" v-html="item.icon"></div>
+                    <p>{{ item.description }}</p>
+                </div>
+            </div>
+            
+            <div class="highlight-box">
+                <h3>Final Thoughts</h3>
+                <p>Your synthesis of the video content with external research has revealed something profound: we're not just teaching machines to see - we're learning how to see ourselves. The field is maturing from basic image processing to understanding context, meaning, and even ethics.</p>
+                
+                <div class="chart-container">
+                    <h4>The Evolution of Computer Vision</h4>
+                    <div class="process-flow">
+                        <div v-for="(stage, index) in evolutionStages" :key="index" class="process-step">
+                            {{ stage }}
+                        </div>
+                    </div>
+                </div>
+                
+                <p>The future belongs to practitioners who can navigate both the technical and ethical dimensions of computer vision. Based on your thorough analysis, you're well-positioned to be part of that future.</p>
+            </div>
+        </section>
+
+        <button class="back-to-top" :class="{ visible: showBackToTop }" @click="scrollToTop">↑</button>
     </div>
 
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script>
-        let mediaElement = null;
-        let recognition = null;
-        let isTranscribing = false;
-
-        // Check for Web Speech API support
-        if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-            document.getElementById('status').style.display = 'block';
-            document.getElementById('status').className = 'status error';
-            document.getElementById('status').textContent = 'Speech recognition not supported in this browser. Please use Chrome, Edge, or Safari.';
-        }
-
-        // File upload handling
-        const fileInput = document.getElementById('fileInput');
-        const uploadArea = document.getElementById('uploadArea');
-        const mediaPlayer = document.getElementById('mediaPlayer');
-        const mediaContainer = document.getElementById('mediaContainer');
-        const startBtn = document.getElementById('startBtn');
-
-        fileInput.addEventListener('change', handleFileSelect);
-
-        // Drag and drop
-        uploadArea.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            uploadArea.classList.add('dragover');
-        });
-
-        uploadArea.addEventListener('dragleave', () => {
-            uploadArea.classList.remove('dragover');
-        });
-
-        uploadArea.addEventListener('drop', (e) => {
-            e.preventDefault();
-            uploadArea.classList.remove('dragover');
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                handleFile(files[0]);
-            }
-        });
-
-        function handleFileSelect(e) {
-            const file = e.target.files[0];
-            if (file) {
-                handleFile(file);
-            }
-        }
-
-        function handleFile(file) {
-            const url = URL.createObjectURL(file);
-            const isVideo = file.type.startsWith('video/');
-            
-            mediaContainer.innerHTML = '';
-            
-            if (isVideo) {
-                mediaElement = document.createElement('video');
-                mediaElement.controls = true;
-                mediaElement.width = 600;
-            } else {
-                mediaElement = document.createElement('audio');
-                mediaElement.controls = true;
-            }
-            
-            mediaElement.src = url;
-            mediaContainer.appendChild(mediaElement);
-            mediaPlayer.style.display = 'block';
-            startBtn.disabled = false;
-
-            // Clean up previous URL
-            mediaElement.addEventListener('loadstart', () => {
-                URL.revokeObjectURL(url);
-            });
-        }
-
-        function startTranscription() {
-            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-                showStatus('Speech recognition not supported', 'error');
+        // Wait for Vue to load
+        window.addEventListener('load', function() {
+            if (typeof Vue === 'undefined') {
+                console.error('Vue.js failed to load. Please check your internet connection.');
                 return;
             }
-
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            recognition = new SpeechRecognition();
             
-            recognition.continuous = true;
-            recognition.interimResults = true;
-            recognition.lang = 'en-US';
+            const { createApp } = Vue;
 
-            let finalTranscript = '';
-            const transcriptOutput = document.getElementById('transcriptOutput');
-
-            recognition.onstart = () => {
-                isTranscribing = true;
-                startBtn.disabled = true;
-                document.getElementById('stopBtn').disabled = false;
-                showStatus('Listening... Make sure your microphone can hear the audio from your speakers.', 'listening');
-            };
-
-            recognition.onresult = (event) => {
-                let interimTranscript = '';
-                
-                for (let i = event.resultIndex; i < event.results.length; i++) {
-                    const transcript = event.results[i][0].transcript;
-                    if (event.results[i].isFinal) {
-                        finalTranscript += transcript + ' ';
-                    } else {
-                        interimTranscript += transcript;
+        createApp({
+            data() {
+                return {
+                    scrollProgress: 0,
+                    showBackToTop: false,
+                    visibleSlides: {
+                        intro: false,
+                        'inverse-problem': false,
+                        history: false,
+                        architectures: false,
+                        applications: false,
+                        ethics: false,
+                        hybrid: false,
+                        synthesis: false
+                    },
+                    particles: [],
+                    animationId: null,
+                    timelineItems: [
+                        {
+                            period: "1950s-1970s: The Visionaries",
+                            description: "Hubel and Wiesel's work on the visual cortex was like discovering the first pieces of a massive puzzle. They showed us that biological vision systems have these hierarchical feature detectors - simple cells responding to edges, complex cells responding to patterns.",
+                            diagram: {
+                                title: "Biological Vision Hierarchy",
+                                steps: ["Retina", "Simple Cells", "Complex Cells", "Recognition"]
+                            }
+                        },
+                        {
+                            period: "1980s: Building the Foundations",
+                            description: "The Canny edge detector from this era is still used today! John Canny created something so elegant that it's survived the deep learning revolution."
+                        },
+                        {
+                            period: "1990s-2000s: Feature Engineering Era",
+                            description: "SIFT was revolutionary because it could find the same features regardless of scale, rotation, or lighting changes. But we had to hand-craft these features - every breakthrough required human insight."
+                        },
+                        {
+                            period: "2010s: The Deep Learning Revolution",
+                            description: "ImageNet in 2010 changed everything. Then AlexNet in 2012 - that was our 'holy cow' moment. It didn't just win; it obliterated the competition.",
+                            stats: {
+                                title: "ImageNet Competition Results",
+                                data: [
+                                    { value: "25.8%", label: "Traditional Methods Error Rate (2011)" },
+                                    { value: "15.3%", label: "AlexNet Error Rate (2012)" }
+                                ]
+                            }
+                        }
+                    ],
+                    cnnLayers: ["Input Image", "Conv Layers", "Pooling", "More Conv", "Dense Layers", "Output"],
+                    architectures: [
+                        {
+                            name: "Vision Transformers",
+                            description: "The new kids on the block! Instead of convolutions, they use attention mechanisms. They're asking 'what parts of this image should I pay attention to?'"
+                        },
+                        {
+                            name: "Generative Models",
+                            description: "GANs and diffusion models aren't just creating pretty pictures. They're teaching us about the structure of visual data itself."
+                        }
+                    ],
+                    synthesisItems: [
+                        {
+                            title: "Investigate Hybrid Models",
+                            icon: `<svg width="100" height="60" viewBox="0 0 100 60">
+                                <rect x="10" y="20" width="30" height="20" fill="#059669" rx="5"/>
+                                <rect x="60" y="20" width="30" height="20" fill="#EA580C" rx="5"/>
+                                <line x1="40" y1="30" x2="60" y2="30" stroke="#7c3aed" stroke-width="4"/>
+                            </svg>`,
+                            description: "Combine traditional robustness with deep learning accuracy for high-stakes applications."
+                        },
+                        {
+                            title: "Prioritize Ethics",
+                            icon: `<svg width="100" height="60" viewBox="0 0 100 60">
+                                <circle cx="50" cy="30" r="20" fill="none" stroke="#EF4444" stroke-width="3"/>
+                                <text x="50" y="35" text-anchor="middle" font-size="20">⚖</text>
+                            </svg>`,
+                            description: "Integrate ethical considerations from the beginning, not as an afterthought."
+                        },
+                        {
+                            title: "Embrace Explainability",
+                            icon: `<svg width="100" height="60" viewBox="0 0 100 60">
+                                <rect x="25" y="15" width="50" height="30" fill="#059669" rx="5"/>
+                                <circle cx="35" cy="25" r="3" fill="white"/>
+                                <circle cx="50" cy="25" r="3" fill="white"/>
+                                <circle cx="65" cy="25" r="3" fill="white"/>
+                                <path d="M 35 35 Q 50 45 65 35" stroke="white" stroke-width="2" fill="none"/>
+                            </svg>`,
+                            description: "For critical applications, understanding 'why' is as important as accuracy."
+                        },
+                        {
+                            title: "Stay Current with Generative AI",
+                            icon: `<svg width="100" height="60" viewBox="0 0 100 60">
+                                <circle cx="30" cy="30" r="8" fill="#EA580C"/>
+                                <circle cx="50" cy="20" r="6" fill="#059669"/>
+                                <circle cx="70" cy="35" r="7" fill="#7c3aed"/>
+                                <circle cx="45" cy="40" r="5" fill="#dc2626"/>
+                            </svg>`,
+                            description: "New generative models are creating unprecedented opportunities for innovation."
+                        }
+                    ],
+                    evolutionStages: ["Pixel Processing", "Feature Detection", "Object Recognition", "Scene Understanding", "Ethical AI"]
+                };
+            },
+            mounted() {
+                this.initParticles();
+                this.animate();
+                this.checkVisibleSlides();
+                window.addEventListener('scroll', this.handleScroll);
+                window.addEventListener('resize', this.handleResize);
+            },
+            beforeUnmount() {
+                if (this.animationId) {
+                    cancelAnimationFrame(this.animationId);
+                }
+                window.removeEventListener('scroll', this.handleScroll);
+                window.removeEventListener('resize', this.handleResize);
+            },
+            methods: {
+                initParticles() {
+                    const canvas = this.$refs.particleCanvas;
+                    if (!canvas) return;
+                    
+                    this.ctx = canvas.getContext('2d');
+                    this.resizeCanvas();
+                    
+                    this.particles = [];
+                    for (let i = 0; i < 50; i++) {
+                        this.particles.push(this.createParticle());
                     }
+                },
+                createParticle() {
+                    return {
+                        x: Math.random() * window.innerWidth,
+                        y: Math.random() * window.innerHeight,
+                        vx: (Math.random() - 0.5) * 0.5,
+                        vy: (Math.random() - 0.5) * 0.5,
+                        size: Math.random() * 3 + 1,
+                        opacity: Math.random() * 0.5 + 0.1
+                    };
+                },
+                resizeCanvas() {
+                    const canvas = this.$refs.particleCanvas;
+                    if (canvas) {
+                        canvas.width = window.innerWidth;
+                        canvas.height = window.innerHeight;
+                    }
+                },
+                animate() {
+                    if (!this.ctx) return;
+                    
+                    this.ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+                    
+                    this.particles.forEach(particle => {
+                        particle.x += particle.vx;
+                        particle.y += particle.vy;
+
+                        if (particle.x < 0 || particle.x > window.innerWidth) particle.vx *= -1;
+                        if (particle.y < 0 || particle.y > window.innerHeight) particle.vy *= -1;
+
+                        this.ctx.save();
+                        this.ctx.globalAlpha = particle.opacity;
+                        this.ctx.fillStyle = '#EA580C';
+                        this.ctx.beginPath();
+                        this.ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+                        this.ctx.fill();
+                        this.ctx.restore();
+                    });
+                    
+                    this.animationId = requestAnimationFrame(this.animate);
+                },
+                handleScroll() {
+                    this.updateScrollProgress();
+                    this.checkVisibleSlides();
+                    this.updateBackToTop();
+                },
+                updateScrollProgress() {
+                    const scrolled = window.pageYOffset;
+                    const maxHeight = document.documentElement.scrollHeight - window.innerHeight;
+                    this.scrollProgress = (scrolled / maxHeight) * 100;
+                },
+                checkVisibleSlides() {
+                    const slides = ['intro', 'inverse-problem', 'history', 'architectures', 'applications', 'ethics', 'hybrid', 'synthesis'];
+                    
+                    slides.forEach(slideId => {
+                        const element = document.getElementById(slideId);
+                        if (element) {
+                            const rect = element.getBoundingClientRect();
+                            const windowHeight = window.innerHeight;
+                            
+                            if (rect.top < windowHeight * 0.8) {
+                                this.visibleSlides[slideId] = true;
+                            }
+                        }
+                    });
+                },
+                updateBackToTop() {
+                    this.showBackToTop = window.pageYOffset > 300;
+                },
+                scrollToSection(sectionId) {
+                    const element = document.getElementById(sectionId);
+                    if (element) {
+                        element.scrollIntoView({ behavior: 'smooth' });
+                    }
+                },
+                scrollToTop() {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                },
+                handleResize() {
+                    this.resizeCanvas();
+                },
+                highlightLayer(layer) {
+                    console.log(`Highlighted layer: ${layer}`);
+                    // Add visual feedback or modal for layer explanation
+                },
+                selectArchitecture(arch) {
+                    console.log(`Selected architecture: ${arch.name}`);
+                    // Add modal or detailed view for architecture
+                },
+                expandSynthesisItem(item) {
+                    console.log(`Expanded synthesis item: ${item.title}`);
+                    // Add modal or expanded view for synthesis item
                 }
-                
-                transcriptOutput.value = finalTranscript + interimTranscript;
-            };
-
-            recognition.onerror = (event) => {
-                showStatus(`Error: ${event.error}`, 'error');
-                stopTranscription();
-            };
-
-            recognition.onend = () => {
-                if (isTranscribing) {
-                    // Restart if still transcribing
-                    recognition.start();
-                }
-            };
-
-            try {
-                recognition.start();
-            } catch (error) {
-                showStatus('Failed to start speech recognition', 'error');
             }
-        }
-
-        function stopTranscription() {
-            isTranscribing = false;
-            if (recognition) {
-                recognition.stop();
-            }
-            startBtn.disabled = false;
-            document.getElementById('stopBtn').disabled = true;
-            hideStatus();
-        }
-
-        function showStatus(message, type) {
-            const status = document.getElementById('status');
-            status.textContent = message;
-            status.className = `status ${type}`;
-            status.style.display = 'block';
-        }
-
-        function hideStatus() {
-            document.getElementById('status').style.display = 'none';
-        }
-
-        function copyTranscript() {
-            const transcriptOutput = document.getElementById('transcriptOutput');
-            transcriptOutput.select();
-            document.execCommand('copy');
-            
-            const copyBtn = event.target;
-            const originalText = copyBtn.textContent;
-            copyBtn.textContent = 'Copied!';
-            setTimeout(() => {
-                copyBtn.textContent = originalText;
-            }, 2000);
-        }
+        }).mount('#app');
+        
+        }); // End of window.addEventListener('load')
     </script>
 </body>
 </html>
