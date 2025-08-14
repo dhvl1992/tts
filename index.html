@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Whisper Speech-to-Text</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+
+        .upload-section {
+            margin-bottom: 30px;
+        }
+
+        .file-upload {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .file-upload:hover {
+            border-color: #764ba2;
+            background: #f8f9ff;
+            transform: translateY(-2px);
+        }
+
+        .file-upload.dragover {
+            border-color: #764ba2;
+            background: #f0f4ff;
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 3em;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        .upload-text {
+            font-size: 1.2em;
+            color: #666;
+            margin-bottom: 15px;
+        }
+
+        .file-input {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .language-selector {
+            margin: 30px 0;
+            text-align: center;
+        }
+
+        .language-selector label {
+            font-size: 1.1em;
+            color: #333;
+            margin-right: 15px;
+        }
+
+        .language-selector select {
+            padding: 10px 15px;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            font-size: 1em;
+            color: #333;
+            background: white;
+            cursor: pointer;
+            transition: border-color 0.3s ease;
+        }
+
+        .language-selector select:focus {
+            outline: none;
+            border-color: #764ba2;
+        }
+
+        .process-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 20px 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .process-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .process-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .progress-section {
+            margin: 30px 0;
+            display: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: #e0e0e0;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.3s ease;
+            border-radius: 5px;
+        }
+
+        .progress-text {
+            text-align: center;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .result-section {
+            margin-top: 30px;
+            display: none;
+        }
+
+        .result-text {
+            background: #f8f9ff;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            min-height: 150px;
+            font-size: 1.1em;
+            line-height: 1.6;
+            color: #333;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .copy-btn {
+            margin-top: 15px;
+            padding: 10px 20px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .copy-btn:hover {
+            background: #218838;
+        }
+
+        .file-info {
+            margin: 15px 0;
+            padding: 15px;
+            background: #f0f4ff;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .file-info h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .file-details {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .error-message {
+            background: #ffe6e6;
+            color: #d33;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            display: none;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+                margin: 10px;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            .file-upload {
+                padding: 20px;
+            }
+
+            .upload-icon {
+                font-size: 2em;
+            }
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #ffffff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎤 Whisper Speech-to-Text</h1>
+        
+        <div class="upload-section">
+            <div class="file-upload" id="fileUpload">
+                <div class="upload-icon">📁</div>
+                <div class="upload-text">Drag & drop your audio/video file here</div>
+                <div style="color: #999; font-size: 0.9em;">or click to browse</div>
+                <input type="file" class="file-input" id="fileInput" accept="audio/*,video/*">
+            </div>
+            
+            <div class="file-info" id="fileInfo">
+                <h3>Selected File:</h3>
+                <div class="file-details" id="fileDetails"></div>
+            </div>
+        </div>
+
+        <div class="language-selector">
+            <label for="language">Language:</label>
+            <select id="language">
+                <option value="en">English</option>
+                <option value="hi">Hindi (हिंदी)</option>
+                <option value="auto">Auto Detect</option>
+            </select>
+        </div>
+
+        <button class="process-btn" id="processBtn" disabled>
+            Select a file to start transcription
+        </button>
+
+        <div class="progress-section" id="progressSection">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text" id="progressText">Initializing...</div>
+        </div>
+
+        <div class="error-message" id="errorMessage"></div>
+
+        <div class="result-section" id="resultSection">
+            <h3>Transcription Result:</h3>
+            <div class="result-text" id="resultText"></div>
+            <button class="copy-btn" id="copyBtn">📋 Copy Text</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.1';
+
+        // Configure transformers.js
+        env.allowRemoteModels = true;
+        env.allowLocalModels = false;
+
+        class WhisperTranscriber {
+            constructor() {
+                this.transcriber = null;
+                this.isLoading = false;
+                this.initializeElements();
+                this.setupEventListeners();
+            }
+
+            initializeElements() {
+                this.fileUpload = document.getElementById('fileUpload');
+                this.fileInput = document.getElementById('fileInput');
+                this.fileInfo = document.getElementById('fileInfo');
+                this.fileDetails = document.getElementById('fileDetails');
+                this.languageSelect = document.getElementById('language');
+                this.processBtn = document.getElementById('processBtn');
+                this.progressSection = document.getElementById('progressSection');
+                this.progressFill = document.getElementById('progressFill');
+                this.progressText = document.getElementById('progressText');
+                this.errorMessage = document.getElementById('errorMessage');
+                this.resultSection = document.getElementById('resultSection');
+                this.resultText = document.getElementById('resultText');
+                this.copyBtn = document.getElementById('copyBtn');
+            }
+
+            setupEventListeners() {
+                // File upload events
+                this.fileUpload.addEventListener('click', () => this.fileInput.click());
+                this.fileUpload.addEventListener('dragover', this.handleDragOver.bind(this));
+                this.fileUpload.addEventListener('dragleave', this.handleDragLeave.bind(this));
+                this.fileUpload.addEventListener('drop', this.handleDrop.bind(this));
+                this.fileInput.addEventListener('change', this.handleFileSelect.bind(this));
+
+                // Process button
+                this.processBtn.addEventListener('click', this.processFile.bind(this));
+
+                // Copy button
+                this.copyBtn.addEventListener('click', this.copyToClipboard.bind(this));
+            }
+
+            handleDragOver(e) {
+                e.preventDefault();
+                this.fileUpload.classList.add('dragover');
+            }
+
+            handleDragLeave(e) {
+                e.preventDefault();
+                this.fileUpload.classList.remove('dragover');
+            }
+
+            handleDrop(e) {
+                e.preventDefault();
+                this.fileUpload.classList.remove('dragover');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    this.handleFile(files[0]);
+                }
+            }
+
+            handleFileSelect(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    this.handleFile(file);
+                }
+            }
+
+            handleFile(file) {
+                // Validate file type
+                const validTypes = ['audio/', 'video/'];
+                const isValid = validTypes.some(type => file.type.startsWith(type));
+                
+                if (!isValid) {
+                    this.showError('Please select a valid audio or video file.');
+                    return;
+                }
+
+                this.selectedFile = file;
+                this.showFileInfo(file);
+                this.processBtn.disabled = false;
+                this.processBtn.textContent = '🚀 Start Transcription';
+                this.hideError();
+                this.hideResult();
+            }
+
+            showFileInfo(file) {
+                const size = (file.size / (1024 * 1024)).toFixed(2);
+                const duration = 'Unknown'; // We'll get this when processing
+                
+                this.fileDetails.innerHTML = `
+                    <strong>Name:</strong> ${file.name}<br>
+                    <strong>Size:</strong> ${size} MB<br>
+                    <strong>Type:</strong> ${file.type}
+                `;
+                this.fileInfo.style.display = 'block';
+            }
+
+            async processFile() {
+                if (!this.selectedFile) return;
+
+                try {
+                    this.processBtn.disabled = true;
+                    this.showProgress();
+                    this.hideError();
+                    this.hideResult();
+
+                    // Load the model if not already loaded
+                    await this.loadModel();
+
+                    // Extract audio from file
+                    this.updateProgress(30, 'Extracting audio...');
+                    const audioData = await this.extractAudio(this.selectedFile);
+
+                    // Transcribe
+                    this.updateProgress(50, 'Transcribing audio...');
+                    const result = await this.transcribe(audioData);
+
+                    // Show result
+                    this.updateProgress(100, 'Complete!');
+                    this.showResult(result.text);
+
+                } catch (error) {
+                    console.error('Transcription error:', error);
+                    this.showError(`Transcription failed: ${error.message}`);
+                } finally {
+                    this.hideProgress();
+                    this.processBtn.disabled = false;
+                    this.processBtn.innerHTML = '🚀 Start Transcription';
+                }
+            }
+
+            async loadModel() {
+                if (this.transcriber) return;
+
+                this.updateProgress(10, 'Loading Whisper model...');
+                
+                try {
+                    this.transcriber = await pipeline('automatic-speech-recognition', 'Xenova/whisper-base', {
+                        progress_callback: (data) => {
+                            if (data.status === 'downloading') {
+                                const percent = Math.round((data.loaded / data.total) * 20) + 10; // 10-30%
+                                this.updateProgress(percent, `Downloading model: ${data.file}...`);
+                            }
+                        }
+                    });
+                    this.updateProgress(30, 'Model loaded successfully!');
+                } catch (error) {
+                    throw new Error('Failed to load Whisper model. Please check your internet connection.');
+                }
+            }
+
+            async extractAudio(file) {
+                return new Promise((resolve, reject) => {
+                    const audio = new Audio();
+                    const canvas = document.createElement('canvas');
+                    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+
+                    audio.onloadeddata = async () => {
+                        try {
+                            const arrayBuffer = await file.arrayBuffer();
+                            const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+                            
+                            // Get the first channel (mono)
+                            const float32Array = audioBuffer.getChannelData(0);
+                            
+                            resolve({
+                                data: float32Array,
+                                sampleRate: audioBuffer.sampleRate
+                            });
+                        } catch (error) {
+                            reject(new Error('Failed to decode audio: ' + error.message));
+                        }
+                    };
+
+                    audio.onerror = () => reject(new Error('Failed to load audio file'));
+                    audio.src = URL.createObjectURL(file);
+                });
+            }
+
+            async transcribe(audioData) {
+                const language = this.languageSelect.value === 'auto' ? null : this.languageSelect.value;
+                
+                try {
+                    const result = await this.transcriber(audioData.data, {
+                        language: language,
+                        task: 'transcribe',
+                        return_timestamps: false,
+                        chunk_length_s: 30,
+                        stride_length_s: 5,
+                    });
+                    
+                    return result;
+                } catch (error) {
+                    throw new Error('Transcription failed: ' + error.message);
+                }
+            }
+
+            showProgress() {
+                this.progressSection.style.display = 'block';
+            }
+
+            hideProgress() {
+                this.progressSection.style.display = 'none';
+            }
+
+            updateProgress(percent, text) {
+                this.progressFill.style.width = percent + '%';
+                this.progressText.textContent = text;
+            }
+
+            showResult(text) {
+                this.resultText.textContent = text || 'No speech detected in the audio.';
+                this.resultSection.style.display = 'block';
+            }
+
+            hideResult() {
+                this.resultSection.style.display = 'none';
+            }
+
+            showError(message) {
+                this.errorMessage.textContent = message;
+                this.errorMessage.style.display = 'block';
+            }
+
+            hideError() {
+                this.errorMessage.style.display = 'none';
+            }
+
+            async copyToClipboard() {
+                try {
+                    await navigator.clipboard.writeText(this.resultText.textContent);
+                    this.copyBtn.textContent = '✅ Copied!';
+                    setTimeout(() => {
+                        this.copyBtn.textContent = '📋 Copy Text';
+                    }, 2000);
+                } catch (error) {
+                    // Fallback for older browsers
+                    const textArea = document.createElement('textarea');
+                    textArea.value = this.resultText.textContent;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    this.copyBtn.textContent = '✅ Copied!';
+                    setTimeout(() => {
+                        this.copyBtn.textContent = '📋 Copy Text';
+                    }, 2000);
+                }
+            }
+        }
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', () => {
+            new WhisperTranscriber();
+        });
+
+        // Handle any unhandled errors
+        window.addEventListener('error', (e) => {
+            console.error('Global error:', e.error);
+        });
+
+        window.addEventListener('unhandledrejection', (e) => {
+            console.error('Unhandled promise rejection:', e.reason);
+        });
+    </script>
+</body>
+</html>
