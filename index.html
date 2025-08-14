@@ -6,7 +6,7 @@
   <title>On-Device Transcriber (EN/HI) — Browser Only</title>
   <style>
     :root{
-      --ink:#0f172a; --muted:#64748b; --bg:#0b1020; --card:#0f162c; --chip:#162043; --accent:#6ee7b7;
+      --ink:#0f172a; --muted:#94a3b8; --bg:#0b1020; --card:#0f162c; --chip:#162043; --accent:#6ee7b7;
       --ring:rgba(110,231,183,.25);
     }
     *{box-sizing:border-box}
@@ -30,9 +30,7 @@
       border-radius:999px; display:inline-flex; gap:8px; align-items:center; color:#d1d5db;
       font-size:.9rem;
     }
-    input[type="file"]{
-      display:none;
-    }
+    input[type="file"]{ display:none; }
     .btn, label[for="file"]{
       cursor:pointer; background:#111a33; border:1px solid rgba(255,255,255,.10);
       padding:10px 14px; border-radius:10px; color:#e5e7eb; font-weight:600;
@@ -43,22 +41,16 @@
       border-color:rgba(255,255,255,.22); box-shadow:0 0 0 6px var(--ring);
     }
     .btn:active, label[for="file"]:active{ transform:translateY(1px) }
-    select, .toggle{
+    select{
       background:#0f162c; color:#e5e7eb; border:1px solid rgba(255,255,255,.12);
       border-radius:10px; padding:10px 12px; font-weight:600;
     }
-    .progress{
-      height:10px; background:#0c1430; border-radius:999px; overflow:hidden; border:1px solid rgba(255,255,255,.08);
-    }
-    .bar{
-      height:100%; width:0%; background:linear-gradient(90deg, var(--accent), #22d3ee);
-      transition:width .2s ease;
-    }
+    .progress{ height:10px; background:#0c1430; border-radius:999px; overflow:hidden; border:1px solid rgba(255,255,255,.08); }
+    .bar{ height:100%; width:0%; background:linear-gradient(90deg, var(--accent), #22d3ee); transition:width .2s ease; }
     textarea{
       width:100%; min-height:260px; resize:vertical; border-radius:12px; padding:14px;
       color:#e5e7eb; background:#0b1227; border:1px solid rgba(255,255,255,.12);
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:.98rem;
-      line-height:1.6;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:.98rem; line-height:1.6;
     }
     .muted{color:var(--muted); font-size:.9rem}
     .footer{margin:22px 0 6px; color:#90a3b4; font-size:.85rem}
@@ -70,13 +62,12 @@
     .grid{display:grid;grid-template-columns:1fr;gap:14px}
     @media (min-width:880px){ .grid{grid-template-columns: 1.1fr .9fr} }
     .small{font-size:.85rem}
-    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;}
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="title">On-Device Transcriber (English/Hindi)</div>
-    <div class="subtitle">Runs fully in your browser using a tiny Whisper model. Works with audio or video files. No server, no API, no downloads.</div>
+    <div class="subtitle">Runs fully in your browser using a tiny Whisper model. Works with audio or video files. No server, no API.</div>
 
     <div class="grid" style="margin-top:18px">
       <div class="card">
@@ -108,7 +99,7 @@
         </div>
 
         <div style="margin:14px 0 8px" class="muted small">
-          Tip: For long videos, start with <b>tiny</b>. If accuracy is low, switch to <b>small</b>.
+          Tip: Start with <b>tiny</b>. If accuracy is low, switch to <b>small</b> (slower).
         </div>
 
         <div class="progress" aria-label="progress" style="margin:12px 0 10px">
@@ -124,8 +115,7 @@
         <textarea id="out" placeholder="Transcript will appear here…"></textarea>
 
         <div class="footer">
-          Supported types depend on your browser (e.g., MP3, WAV, M4A, OGG, WEBM, MP4 video audio track).
-          If a video doesn’t decode, convert it client-side before upload or try a different browser.
+          Supported types depend on your browser (e.g., MP3, WAV, M4A, OGG, WEBM, MP4 video audio track). If a video doesn’t decode, try a different browser or re-export the audio track.
         </div>
       </div>
 
@@ -139,9 +129,9 @@
         <div class="muted small">
           Notes:
           <ul style="margin:8px 0 0 18px">
-            <li><b>Auto-detect</b> language is default; choose <b>Hindi</b> for better Devanagari output.</li>
+            <li><b>Auto-detect</b> by default; choose <b>Hindi</b> for better Devanagari output.</li>
             <li>Larger models are slower but more accurate.</li>
-            <li>Keep this tab open during processing; progress shows model load & transcription steps.</li>
+            <li>Status & bar show model download, initialization, and transcription.</li>
           </ul>
         </div>
         <div class="muted small" style="margin-top:10px">
@@ -153,9 +143,9 @@
 
   <!-- Transformers.js (runs Whisper in-browser) -->
   <script type="module">
-    import { pipeline, env } from "https://cdn.jsdelivr.net/npm/@xenova/transformers@3.0.0/dist/transformers.min.js";
-
-    // Prefer WebGPU if available (faster). Falls back to WASM.
+    // ✅ Correct, known-good versions
+    import { pipeline, env } from "https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2/dist/transformers.min.js";
+    // Point ONNX Runtime Web to a fixed version
     env.backends.onnx.wasm.wasmPaths = "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.0/dist/";
     env.allowLocalModels = false; // load models from Hugging Face CDN
     env.useBrowserCache = true;   // cache models in the browser for faster reloads
@@ -187,19 +177,29 @@
 
     async function getTranscriber(modelId){
       if (transcribers.has(modelId)) return transcribers.get(modelId);
-      setEngine('loading model…');
+
+      // Show immediately that loading has started
+      setEngine('loading model…','warn');
+      setProgress(2);
+
       const transcriber = await pipeline('automatic-speech-recognition', modelId, {
         progress_callback: (p) => {
-          // p: { status, file, loaded, total }
-          if (p.status === 'initiate') setProgress(5);
-          else if (p.status === 'download') {
+          if (p.status === 'initiate') {
+            setEngine('downloading model…','warn');
+            setProgress(5);
+          } else if (p.status === 'download') {
             const pct = 5 + Math.round((p.loaded / (p.total || 1)) * 60);
             setProgress(pct);
-          } else if (p.status === 'load') setProgress(70);
+          } else if (p.status === 'load') {
+            setEngine('initializing…','warn');
+            setProgress(70);
+          }
         }
       });
+
       transcribers.set(modelId, transcriber);
       setEngine('ready');
+      setProgress(75); // hand-off to transcription phase later
       return transcriber;
     }
 
@@ -220,7 +220,7 @@
       return { samples: data, sampleRate: audioBuf.sampleRate };
     }
 
-    // Simple resampler to 16000 Hz using OfflineAudioContext (better quality than naive)
+    // Resample to 16kHz using OfflineAudioContext
     async function resampleTo16k({ samples, sampleRate }){
       if (sampleRate === 16000) return samples;
       const src = new AudioBuffer({ length: samples.length, sampleRate, numberOfChannels: 1 });
@@ -244,40 +244,32 @@
       }
       lockUI(true);
       outEl.value = '';
-      setProgress(0);
-      setEngine('preparing…','warn');
+      setProgress(75); // continue from model-ready
+      setEngine('preparing audio…','warn');
 
       try{
         const file = fileEl.files[0];
-        // 1) Model
-        const modelId = modelEl.value; // 'Xenova/whisper-tiny' or 'Xenova/whisper-small'
+        // 1) Ensure model is loaded (or load it if user changed the dropdown)
+        const modelId = modelEl.value;
         const asr = await getTranscriber(modelId);
 
         // 2) Decode -> PCM -> resample
-        setEngine('decoding media…','warn'); setProgress(75);
+        setEngine('decoding media…','warn'); setProgress(78);
         const pcm = await decodeToPCM(file);
         const mono16k = await resampleTo16k(pcm);
 
-        // 3) Transcribe
+        // 3) Transcribe (chunked)
         setEngine('transcribing…','warn'); setProgress(80);
-
-        // Language handling: 'auto' lets Whisper detect.
         const langSel = langEl.value;
         const language = (langSel === 'auto') ? undefined : langSel;
 
-        // Chunking large audio to keep memory sane (approx 30s chunks at 16kHz)
-        const sr = 16000;
-        const chunkSec = 30;
-        const chunkSize = sr * chunkSec;
+        const sr = 16000, chunkSec = 30, chunkSize = sr * chunkSec;
         let text = '';
         for (let start = 0; start < mono16k.length; start += chunkSize){
           const end = Math.min(mono16k.length, start + chunkSize);
           const chunk = mono16k.subarray(start, end);
 
           const result = await asr(chunk, {
-            // Force transcription (not translation)
-            // NOTE: Whisper will output Devanagari for Hindi when language='hi'
-            // For auto, it attempts detection.
             // @ts-ignore
             chunk_length_s: chunkSec,
             return_timestamps: false,
@@ -295,7 +287,7 @@
       }catch(err){
         console.error(err);
         setEngine('error','err');
-        alert('Could not transcribe this file in the browser. Try another format or smaller model.');
+        alert('Could not transcribe this file in the browser. Try another format or the tiny model.');
       }finally{
         lockUI(false);
       }
@@ -313,14 +305,35 @@
       outEl.value = '';
       fileEl.value = '';
       setProgress(0);
-      setEngine('ready');
+      const ready = transcribers.has(modelEl.value);
+      setEngine(ready ? 'ready' : 'not loaded', ready ? 'ok' : 'warn');
     });
 
-    // Detect WebGPU availability to inform user (optional)
+    // === Preload model on page load so user sees live status immediately ===
     (async ()=>{
       const hasWebGPU = !!navigator.gpu;
-      setEngine(hasWebGPU ? 'ready (WebGPU available)' : 'ready (WASM fallback)');
+      setEngine('checking backend…','warn');
+      setProgress(1);
+
+      try{
+        await getTranscriber(modelEl.value);
+        setEngine(hasWebGPU ? 'ready (WebGPU available)' : 'ready (WASM fallback)');
+        setProgress(75);
+      }catch(e){
+        console.error(e);
+        setEngine('error loading model','err');
+      }
     })();
+
+    // If the user changes model, load the new one and show status
+    modelEl.addEventListener('change', async ()=>{
+      try{
+        await getTranscriber(modelEl.value);
+      }catch(e){
+        console.error(e);
+        setEngine('error loading model','err');
+      }
+    });
   </script>
 </body>
 </html>
